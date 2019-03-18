@@ -1,0 +1,21 @@
+.container{
+  margin-top:50px;
+  margin-bottom: 50px; 
+}
+footer {
+  color: #fff;
+  background: #000;
+  margin-top: 50px;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+footer a {
+  color: #fff;
+  text-decoration: underline;
+  background-color: transparent;
+}
+footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
