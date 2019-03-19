@@ -1,6 +1,9 @@
 var express=require("express");
 var exphbs=require("express-handlebars");
 var expressSession = require("express-session");
+var expValChecker=require("express-validator/check");
+var check=expValChecker.check;
+var validationResult = expValChecker.validationResult;
 var fs=require("fs");
 var MongoStore = require("connect-mongo")(expressSession);
 var mongoose = require("mongoose");
@@ -50,7 +53,7 @@ app.get("/", function(req, res) {
 
 app.get("/admin", function(req, res) {
   if (req.isAuthenticated()) {
-    console.log(req.user);
+    //console.log(req.user);
     res.render("admin");
   } else {
     res.redirect("/");
@@ -65,40 +68,57 @@ app.get("/signup", function(req, res) {
   }
 });
 
-app.post("/signup", function(req, res) {
-  console.log("will signup");
+app.post("/signup", 
+  check("username").isEmail(),
+  check("password").isLength({ min: 6 }),
+  function(req, res) {
+  // console.log("will signup");
+    console.log("req.body", req.body);
+    var errors = validationResult(req);
 
-  var firstName = req.body.firstName;
-  var username=req.body.username;
-  var password = req.body.password;
-  var conf_password=req.body.confirme-password;
-  var surname=req.body.surname;
-  var date=req.body.date;
-
-
-//password.match(/[a-z]{8}/gi);
-  User.register(
-    new User({
-      username:username,
-      firstName: firstName,
-      surname:surname,
-      date:date
-
-      // other fields can be added here
-    }),
-    password, // password will be hashed
-    
-    function(err, user) {
-      if (err) {
-        console.log("/signup user register err", err);
-        return res.render("register");
-      } else {
-        passport.authenticate("local")(req, res, function() {
-          res.redirect("/admin");
-        });
-      }
+    console.log("#1", errors.isEmpty());
+    if (errors.array().length > 0) {
+      console.log("#2",errors.array());
+      // res.json({
+      //   errors: errors.array() // to be used in a json loop
+      // });
+      res.render('signup', {
+      errors: errors.array()
+      })
+      return;
     }
-  );
+
+    console.log("#3");
+    // code to add a new user to the DB
+    var firstName = req.body.firstName;
+    var username=req.body.username;
+    var password = req.body.password;
+    var conf_password=req.body.confirme-password;
+    var surname=req.body.surname;
+    var date=req.body.date;
+  //password.match(/[a-z]{8}/gi);
+    User.register(
+      new User({
+        username:username,
+        firstName: firstName,
+        surname:surname,
+        date:date
+
+        // other fields can be added here
+      }),
+      password, // password will be hashed
+      
+      function(err, user) {
+        if (err) {
+          console.log("/signup user register err", err);
+          return res.render("signup");
+        } else {
+          passport.authenticate("local")(req, res, function() {
+            res.redirect("/admin");
+          });
+        }
+      }
+    );
 });
 
 app.get("/login", function(req, res) {
@@ -123,9 +143,10 @@ app.get("/logout", function(req, res) {
 app.get('/offers/:id',function(req,res){
   OfferModel.findOne({id:req.params.id}).populate('user').exec(function(err,offer){
     if(err!==null){
-      console.log("offer find one err", err);
+      // console.log("offer find one err", err);
       return;
     } 
+    // console.log(offer);
     res.render('products',{
         id:offer.id,
         titre:offer.title,
@@ -151,7 +172,7 @@ app.post('/newoffer', upload.single('image'),function(req,res){
     console.log("offer find one err", err);
     return;
   } 
-  console.log("***",req)
+  // console.log("***",req)
   var newOffer= new OfferModel({
     title:req.body.title,
     id:req.body.id,
@@ -170,7 +191,7 @@ newOffer.save(function(err,offer){
     console.log('something went wrong err', err);
     
   } else{ 
-    console.log('we just saved the new  offer ',offer);
+    // console.log('we just saved the new  offer ',offer);
       res.redirect('/offers/'+offer.id)
   } 
   
