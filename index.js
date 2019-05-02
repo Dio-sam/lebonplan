@@ -18,6 +18,7 @@ var upload = multer({ dest: 'public/uploads/' });
 var app=express();
 var port=process.env.PORT||3000;
 var mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/lebonplan";
+
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useCreateIndex: true
@@ -72,16 +73,11 @@ app.post("/signup",
   check("username").isEmail(),
   check("password").isLength({ min: 6 }),
   function(req, res) {
-  // console.log("will signup");
-    console.log("req.body", req.body);
+    // console.log("req.body", req.body);
     var errors = validationResult(req);
-
-    console.log("#1", errors.isEmpty());
+    // console.log("#1", errors.isEmpty());
     if (errors.array().length > 0) {
-      console.log("#2",errors.array());
-      // res.json({
-      //   errors: errors.array() // to be used in a json loop
-      // });
+      // console.log("#2",errors.array());
       res.render('signup', {
       errors: errors.array()
       })
@@ -103,10 +99,8 @@ app.post("/signup",
         firstName: firstName,
         surname:surname,
         date:date
-
-        // other fields can be added here
       }),
-      password, // password will be hashed
+      password,
       
       function(err, user) {
         if (err) {
@@ -119,7 +113,7 @@ app.post("/signup",
         }
       }
     );
-});
+  });
 
 app.get("/login", function(req, res) {
   if (req.isAuthenticated()) {
@@ -167,41 +161,37 @@ app.get("/newoffer", function(req, res) {
     res.render("newOffer");
 });
 app.post('/newoffer', upload.single('image'),function(req,res){
- User.findOne({id:303},function(err,user){
-  if(err!==null){
-    console.log("offer find one err", err);
-    return;
-  } 
-  // console.log("***",req)
-  var newOffer= new OfferModel({
-    title:req.body.title,
-    id:req.body.id,
-    description:req.body.description,
-    images:"/uploads/"+req.body.title+".jpg",
-    city:req.body.city,
-    user:new mongoose.Types.ObjectId(user._id)
-  });
-  var newImage= "public/uploads/"+req.body.title+".jpg";
-  fs.rename(req.file.path, newImage, function(){
-    console.log("l'image bien sauvegarde");
-  });
- 
-newOffer.save(function(err,offer){
-  if (err !== null) {
-    console.log('something went wrong err', err);
-    
-  } else{ 
-    // console.log('we just saved the new  offer ',offer);
-      res.redirect('/offers/'+offer.id)
-  } 
-  
+  User.findOne({id:303},function(err,user){
+    if(err!==null){
+      console.log("offer find one err", err);
+      return;
+    } 
+    // console.log("***",req)
+    var newOffer= new OfferModel({
+      title:req.body.title,
+      id:req.body.id,
+      description:req.body.description,
+      images:"/uploads/"+req.body.title+".jpg",
+      city:req.body.city,
+      user:new mongoose.Types.ObjectId(user._id)
+    });
+    var newImage= "public/uploads/"+req.body.title+".jpg";
+    fs.rename(req.file.path, newImage, function(){
+      console.log("l'image bien sauvegarde");
+    });
+    newOffer.save(function(err,offer){
+      if (err !== null) {
+        console.log('something went wrong err', err);
+        
+      } else{ 
+        // console.log('we just saved the new  offer ',offer);
+        res.redirect('/offers/'+offer.id)
+      } 
+    });
   });
 });
-
   
-});
-  
-app.get('/add/favorites/:id',function(req,res){
+app.post('/add/favorites/:id',function(req,res){
   var id=req.params.id;
   var favorite=new Favorite({
         idOffer:id,
@@ -215,14 +205,12 @@ app.get('/add/favorites/:id',function(req,res){
     } 
     res.json(favorite);
     });
-   
-
 });
 
-app.get('/remove/favorites/:id',function(req,res){
+app.post('/remove/favorites/:id',function(req,res){
   var id=req.params.id;
   
-  Favorite.findOneAndUpdate({idOffer:id},{isFavorite:false},function(err, favorite) {
+  Favorite.UpdateOne({idOffer:id},{isFavorite:false},function(err, favorite) {
     if (err !== null) {
       console.log('something went wrong err', err);
     } else {
@@ -255,16 +243,7 @@ app.get('/cities/:city',function(req,res){
     res.render('offers',{
     offres:newoffer
     }); 
-// function goPage(min,max){
-  
-//   startRec = Math.max(min - 1, 0) * max;
-//   endRec = Math.min(startRec + max, newoffer.length)
-//   recordsToShow = newoffer.splice(startRec, endRec);
-//   return recordsToShow;
-// }
-//    console.log(goPage(1,3))
   }); 
-
 });
 
 app.listen(port,function(){
